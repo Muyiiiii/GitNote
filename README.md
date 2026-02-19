@@ -6,8 +6,7 @@ A lightweight Electron desktop app for managing text snippets with zero-cost syn
 
 Current version: **v1.0.0**
 
-- Latest: `https://github.com/<owner>/<repo>/releases/latest`
-- Changelog: `https://github.com/<owner>/<repo>/releases`
+- Latest: [https://github.com/Muyiiiii/GitNote/releases/tag/v1](https://github.com/Muyiiiii/GitNote/releases/tag/v1)
 
 ## Features
 
