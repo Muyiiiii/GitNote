@@ -124,6 +124,7 @@
         <div class="settings-actions">
           <button id="modeEncrypted">Use Encrypted</button>
           <button id="modePlaintext" class="ghost danger">Use Plaintext</button>
+          <button id="vaultChange" class="ghost">Change Vault Password</button>
         </div>
         <p id="modeError" class="error"></p>
       </div>
@@ -154,6 +155,30 @@
         <button id="vaultAction">Unlock</button>
       </div>
       <p id="vaultError" class="error"></p>
+    </div>
+  </section>
+
+  <section id="vaultChangeModal" class="modal hidden">
+    <div class="editor-card">
+      <h2 id="vaultChangeTitle">Change Vault Password</h2>
+      <p id="vaultChangeHint" class="muted small"></p>
+      <label id="vaultCurrentWrap">
+        Current password
+        <input id="vaultCurrentPassword" type="password" placeholder="Enter current password" />
+      </label>
+      <label>
+        New password
+        <input id="vaultNewPassword" type="password" placeholder="Enter new password" />
+      </label>
+      <label>
+        Confirm new password
+        <input id="vaultConfirmPassword" type="password" placeholder="Confirm new password" />
+      </label>
+      <div class="editor-actions">
+        <button id="vaultChangeAction">Update Password</button>
+        <button id="vaultChangeCancel" class="ghost">Cancel</button>
+      </div>
+      <p id="vaultChangeError" class="error"></p>
     </div>
   </section>
 

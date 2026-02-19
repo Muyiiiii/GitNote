@@ -66,6 +66,7 @@ const els = {
   settingsError: document.getElementById('settingsError'),
   modeEncrypted: document.getElementById('modeEncrypted'),
   modePlaintext: document.getElementById('modePlaintext'),
+  vaultChange: document.getElementById('vaultChange'),
   modeStatus: document.getElementById('modeStatus'),
   modeError: document.getElementById('modeError'),
   logs: document.getElementById('logs'),
@@ -79,10 +80,21 @@ const els = {
   vaultHint: document.getElementById('vaultHint'),
   vaultPassword: document.getElementById('vaultPassword'),
   vaultAction: document.getElementById('vaultAction'),
-  vaultError: document.getElementById('vaultError')
+  vaultError: document.getElementById('vaultError'),
+  vaultChangeModal: document.getElementById('vaultChangeModal'),
+  vaultChangeTitle: document.getElementById('vaultChangeTitle'),
+  vaultChangeHint: document.getElementById('vaultChangeHint'),
+  vaultCurrentWrap: document.getElementById('vaultCurrentWrap'),
+  vaultCurrentPassword: document.getElementById('vaultCurrentPassword'),
+  vaultNewPassword: document.getElementById('vaultNewPassword'),
+  vaultConfirmPassword: document.getElementById('vaultConfirmPassword'),
+  vaultChangeAction: document.getElementById('vaultChangeAction'),
+  vaultChangeCancel: document.getElementById('vaultChangeCancel'),
+  vaultChangeError: document.getElementById('vaultChangeError')
 };
 
 let vaultMode = 'unlock';
+let pendingModeSwitch = null;
 
 function requiresVault() {
   return state.security.dataMode === 'encrypted';
@@ -216,6 +228,29 @@ function openVault(mode) {
 
 function closeVault() {
   els.vault.classList.add('hidden');
+}
+
+function openVaultChange() {
+  els.vaultChangeError.textContent = '';
+  els.vaultCurrentPassword.value = '';
+  els.vaultNewPassword.value = '';
+  els.vaultConfirmPassword.value = '';
+
+  if (state.vault.configured) {
+    els.vaultChangeHint.textContent = 'Enter your current password to update it.';
+    els.vaultCurrentWrap.classList.remove('hidden');
+    els.vaultCurrentPassword.focus();
+  } else {
+    els.vaultChangeHint.textContent = 'No vault password set. Create one now.';
+    els.vaultCurrentWrap.classList.add('hidden');
+    els.vaultNewPassword.focus();
+  }
+
+  els.vaultChangeModal.classList.remove('hidden');
+}
+
+function closeVaultChange() {
+  els.vaultChangeModal.classList.add('hidden');
 }
 
 function updateSettingsView() {
@@ -567,6 +602,27 @@ els.vaultAction.addEventListener('click', async () => {
     return;
   }
 
+  if (pendingModeSwitch === 'encrypted') {
+    const result = await window.api.setStorageMode({
+      mode: 'encrypted',
+      password: String(password || '')
+    });
+    if (!result.ok) {
+      els.vaultError.textContent = result.error || 'Failed to switch mode.';
+      return;
+    }
+    pendingModeSwitch = null;
+    applySecurityAndVault(result);
+    if (result.items) {
+      state.items = result.items;
+      applyFilter();
+    }
+    updateModeStatus();
+    closeVault();
+    resetFocus();
+    return;
+  }
+
   const result =
     vaultMode === 'setup'
       ? await window.api.setupVault(password)
@@ -584,26 +640,8 @@ els.vaultAction.addEventListener('click', async () => {
 
 els.modeEncrypted.addEventListener('click', async () => {
   els.modeError.textContent = '';
-  const password = window.prompt(
-    state.vault.configured ? 'Enter vault password to enable encrypted mode:' : 'Set a new vault password:'
-  );
-  if (password === null) {
-    return;
-  }
-  const result = await window.api.setStorageMode({
-    mode: 'encrypted',
-    password: String(password || '')
-  });
-  if (!result.ok) {
-    els.modeError.textContent = result.error || 'Failed to switch mode.';
-    return;
-  }
-  applySecurityAndVault(result);
-  if (result.items) {
-    state.items = result.items;
-    applyFilter();
-  }
-  updateModeStatus();
+  pendingModeSwitch = 'encrypted';
+  openVault(state.vault.configured ? 'unlock' : 'setup');
 });
 
 els.modePlaintext.addEventListener('click', async () => {
@@ -629,6 +667,48 @@ els.modePlaintext.addEventListener('click', async () => {
   }
   closeVault();
   updateModeStatus();
+});
+
+els.vaultChange.addEventListener('click', () => {
+  openVaultChange();
+});
+
+els.vaultChangeCancel.addEventListener('click', () => {
+  closeVaultChange();
+});
+
+els.vaultChangeAction.addEventListener('click', async () => {
+  els.vaultChangeError.textContent = '';
+  const oldPassword = state.vault.configured ? els.vaultCurrentPassword.value : '';
+  const newPassword = els.vaultNewPassword.value;
+  const confirm = els.vaultConfirmPassword.value;
+
+  if (!newPassword) {
+    els.vaultChangeError.textContent = 'New vault password is required.';
+    return;
+  }
+  if (newPassword !== confirm) {
+    els.vaultChangeError.textContent = 'Passwords do not match.';
+    return;
+  }
+
+  const result = await window.api.rotateVaultPassword({
+    oldPassword,
+    newPassword
+  });
+  if (!result.ok) {
+    els.vaultChangeError.textContent = result.error || 'Password update failed.';
+    return;
+  }
+
+  applySecurityAndVault(result);
+  if (result.items) {
+    state.items = result.items;
+    applyFilter();
+  }
+  updateModeStatus();
+  closeVaultChange();
+  resetFocus();
 });
 
 els.openRepo.addEventListener('click', async () => {
@@ -707,6 +787,23 @@ document.addEventListener('keydown', async (event) => {
 
   if (event.key === 'Escape' && !els.logs.classList.contains('hidden')) {
     closeLogs();
+    return;
+  }
+
+  if (event.key === 'Escape' && !els.vaultChangeModal.classList.contains('hidden')) {
+    closeVaultChange();
+    return;
+  }
+
+  if (event.key === 'Escape' && !els.vault.classList.contains('hidden')) {
+    pendingModeSwitch = null;
+    closeVault();
+    return;
+  }
+
+  if (!els.vaultChangeModal.classList.contains('hidden') && event.key === 'Enter') {
+    event.preventDefault();
+    await els.vaultChangeAction.click();
     return;
   }
 

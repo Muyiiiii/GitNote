@@ -294,6 +294,68 @@ function unlockVault(password) {
   sessionVaultKey = key;
 }
 
+async function rotateVaultPassword(payload) {
+  const oldPassword = String(payload && payload.oldPassword ? payload.oldPassword : '');
+  const newPassword = String(payload && payload.newPassword ? payload.newPassword : '');
+
+  if (!newPassword) {
+    return { ok: false, error: 'New vault password is required.' };
+  }
+
+  const configured = isVaultConfigured();
+  let oldKey = null;
+
+  if (configured) {
+    if (!oldPassword) {
+      return { ok: false, error: 'Current vault password is required.' };
+    }
+    try {
+      const vault = getVaultConfig();
+      oldKey = deriveVaultKey(oldPassword, vault.salt);
+      const verifier = decryptTextWithKey(vault.verifier, oldKey);
+      if (verifier !== VAULT_VERIFIER_PLAINTEXT) {
+        return { ok: false, error: 'Vault password is incorrect.' };
+      }
+    } catch (err) {
+      return { ok: false, error: String(err.message || err) };
+    }
+  }
+
+  let items = null;
+  if (isEncryptedMode()) {
+    if (!oldKey) {
+      return { ok: false, error: 'Vault password is required to rotate in encrypted mode.' };
+    }
+    try {
+      sessionVaultKey = oldKey;
+      items = await loadItems();
+    } catch (err) {
+      return { ok: false, error: String(err.message || err) };
+    }
+  }
+
+  const salt = createRandomBase64(16);
+  const newKey = deriveVaultKey(newPassword, salt);
+  const verifier = encryptTextWithKey(VAULT_VERIFIER_PLAINTEXT, newKey);
+  setVaultConfig({ salt, verifier });
+  sessionVaultKey = newKey;
+
+  if (isEncryptedMode()) {
+    try {
+      await saveItems(items || []);
+    } catch (_err) {
+      return { ok: false, error: 'Failed to re-encrypt data.' };
+    }
+  }
+
+  return {
+    ok: true,
+    items: items || undefined,
+    security: { dataMode: getDataMode() },
+    vault: { configured: true, unlocked: true }
+  };
+}
+
 function getGitInstance(baseDir) {
   return simpleGit({ baseDir });
 }
@@ -906,6 +968,14 @@ ipcMain.handle('vault:unlock', async (_event, password) => {
     };
   } catch (err) {
     sessionVaultKey = null;
+    return { ok: false, error: String(err.message || err) };
+  }
+});
+
+ipcMain.handle('vault:rotate', async (_event, payload) => {
+  try {
+    return await rotateVaultPassword(payload);
+  } catch (err) {
     return { ok: false, error: String(err.message || err) };
   }
 });

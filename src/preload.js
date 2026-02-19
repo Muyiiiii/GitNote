@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('api', {
   logoutConfig: (payload) => ipcRenderer.invoke('config:logout', payload),
   setupVault: (password) => ipcRenderer.invoke('vault:setup', password),
   unlockVault: (password) => ipcRenderer.invoke('vault:unlock', password),
+  rotateVaultPassword: (payload) => ipcRenderer.invoke('vault:rotate', payload),
   openRepo: () => ipcRenderer.invoke('config:openRepo'),
   selectStorageDir: () => ipcRenderer.invoke('storage:select'),
   saveStorageDir: (dir) => ipcRenderer.invoke('storage:save', dir),
