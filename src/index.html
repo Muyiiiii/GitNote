@@ -1,0 +1,162 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GitNote Quick</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <section id="configView" class="panel hidden">
+      <h1>GitNote Quick Setup</h1>
+      <p class="subtitle">Configure GitHub private repo for sync.</p>
+      <label>
+        Repo URL
+        <input id="repoUrl" type="text" placeholder="https://github.com/you/your-private-repo.git" />
+      </label>
+      <label>
+        Branch
+        <input id="branch" type="text" placeholder="main" />
+      </label>
+      <label>
+        Personal Access Token
+        <input id="pat" type="password" placeholder="ghp_xxx" />
+      </label>
+      <div class="settings-section">
+        <h3>Storage</h3>
+        <p id="configStorageHelp" class="muted small"></p>
+        <div class="field-row">
+          <input id="configStorageDir" type="text" placeholder="Select a folder" />
+          <button id="configChooseStorage">Choose</button>
+        </div>
+        <div class="settings-actions">
+          <button id="configSaveStorage">Save</button>
+          <button id="configResetStorage" class="ghost">Use Default</button>
+        </div>
+        <p id="configStorageError" class="error"></p>
+      </div>
+      <button id="saveConfig">Save and Connect</button>
+      <p id="configError" class="error"></p>
+    </section>
+
+    <section id="appView" class="panel hidden">
+      <header class="topbar">
+        <input id="search" type="text" placeholder="Search snippets..." autocomplete="off" />
+        <div class="actions">
+          <button id="btnNew" title="Ctrl+N">New</button>
+          <button id="btnEdit" title="Ctrl+E">Edit</button>
+          <button id="btnDelete">Delete</button>
+          <button id="btnSettings">Settings</button>
+        </div>
+      </header>
+
+      <ul id="list" class="list"></ul>
+
+      <footer class="hint">Enter or click to copy and hide</footer>
+    </section>
+  </main>
+
+  <section id="editor" class="modal hidden">
+    <div class="editor-card">
+      <h2 id="editorTitle">New Snippet</h2>
+      <textarea id="editorText" placeholder="Write snippet text..."></textarea>
+      <div class="editor-actions">
+        <button id="saveItem">Save</button>
+        <button id="cancelEdit" class="ghost">Cancel</button>
+      </div>
+      <p id="editorError" class="error"></p>
+    </div>
+  </section>
+
+  <section id="settings" class="modal hidden">
+    <div class="settings-card">
+      <div class="settings-header">
+        <h2>Settings</h2>
+        <button id="closeSettings" class="ghost">Close</button>
+      </div>
+
+      <div class="settings-section">
+        <h3>Storage</h3>
+        <p id="storageHelp" class="muted small"></p>
+        <div class="field-row">
+          <input id="storageDir" type="text" placeholder="Select a folder" />
+          <button id="chooseStorage">Choose</button>
+        </div>
+        <div class="settings-actions">
+          <button id="saveStorage">Save</button>
+          <button id="resetStorage" class="ghost">Use Default</button>
+        </div>
+        <p id="storageError" class="error"></p>
+      </div>
+
+      <div class="settings-section">
+        <h3>GitHub Repo</h3>
+        <label>
+          Repo URL
+          <input id="settingsRepoUrl" type="text" placeholder="https://github.com/you/repo.git" />
+        </label>
+        <label>
+          Branch
+          <input id="settingsBranch" type="text" placeholder="main" />
+        </label>
+        <label>
+          Personal Access Token
+          <input id="settingsPat" type="password" placeholder="ghp_xxx" />
+        </label>
+        <div class="settings-actions">
+          <button id="connectRepo">Connect</button>
+          <button id="openRepo" class="ghost">Open Repo</button>
+          <button id="viewLogs" class="ghost">View Logs</button>
+          <button id="logoutRepo" class="ghost danger">Logout</button>
+        </div>
+        <label class="inline-option">
+          <input id="logoutClean" type="checkbox" />
+          Remove local repo on logout
+        </label>
+        <p id="logoutWarning" class="warning small hidden">Backup the local repo before cleaning.</p>
+        <p id="settingsError" class="error"></p>
+      </div>
+
+      <div class="settings-section">
+        <h3>Data Protection</h3>
+        <p id="modeStatus" class="muted small"></p>
+        <div class="settings-actions">
+          <button id="modeEncrypted">Use Encrypted</button>
+          <button id="modePlaintext" class="ghost danger">Use Plaintext</button>
+        </div>
+        <p id="modeError" class="error"></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="logs" class="modal hidden">
+    <div class="logs-card">
+      <div class="settings-header">
+        <h2>Application Logs</h2>
+        <button id="closeLogs" class="ghost">Close</button>
+      </div>
+      <p id="logsPath" class="muted small"></p>
+      <textarea id="logsText" readonly spellcheck="false"></textarea>
+      <div class="settings-actions">
+        <button id="refreshLogs">Refresh</button>
+      </div>
+      <p id="logsError" class="error"></p>
+    </div>
+  </section>
+
+  <section id="vault" class="modal hidden">
+    <div class="editor-card">
+      <h2 id="vaultTitle">Unlock Vault</h2>
+      <p id="vaultHint" class="muted small"></p>
+      <input id="vaultPassword" type="password" placeholder="Enter vault password" />
+      <div class="editor-actions">
+        <button id="vaultAction">Unlock</button>
+      </div>
+      <p id="vaultError" class="error"></p>
+    </div>
+  </section>
+
+  <script src="./renderer.js"></script>
+</body>
+</html>

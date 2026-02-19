@@ -1,0 +1,45 @@
+{
+  "name": "gitnote-quick",
+  "version": "1.0.0",
+  "description": "A lightweight clipboard note app with GitHub sync.",
+  "main": "src/main.js",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "simple-git": "^3.30.0"
+  },
+  "devDependencies": {
+    "electron": "^36.3.2",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.gitnote.quick",
+    "productName": "GitNote Quick",
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "target": [
+        "dmg"
+      ]
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis"
+      ]
+    },
+    "nsis": {
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
+    }
+  }
+}
