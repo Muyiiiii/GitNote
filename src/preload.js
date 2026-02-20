@@ -13,6 +13,8 @@ contextBridge.exposeInMainWorld('api', {
   resetStorageDir: () => ipcRenderer.invoke('storage:reset'),
   setStorageMode: (payload) => ipcRenderer.invoke('storage:mode:set', payload),
   readLogs: () => ipcRenderer.invoke('logs:read'),
+  pullSync: () => ipcRenderer.invoke('sync:pull'),
+  forceSync: () => ipcRenderer.invoke('sync:force'),
   createItem: (text) => ipcRenderer.invoke('items:create', text),
   updateItem: (payload) => ipcRenderer.invoke('items:update', payload),
   deleteItem: (id) => ipcRenderer.invoke('items:delete', id),

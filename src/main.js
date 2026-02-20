@@ -629,9 +629,81 @@ async function pullOnStartupSilently() {
   try {
     await initializeRepository();
     const conf = getGitConfig();
-    await runGitInRepo(['pull', '--rebase', 'origin', conf.branch]);
+    await runGitInRepo(['fetch', 'origin', conf.branch]);
+    await runGitInRepo(['rebase', `origin/${conf.branch}`]);
   } catch (err) {
     console.error('Startup pull failed:', sanitizeSensitiveText(err.message));
+  }
+}
+
+async function pullNow() {
+  if (!isConfigured()) {
+    return { ok: false, error: 'Repo is not configured.' };
+  }
+  try {
+    await initializeRepository();
+    const conf = getGitConfig();
+    await runGitInRepo(['fetch', 'origin', conf.branch]);
+    await runGitInRepo(['rebase', `origin/${conf.branch}`]);
+    const items = await loadItems();
+    return {
+      ok: true,
+      items,
+      security: {
+        dataMode: getDataMode()
+      },
+      vault: {
+        configured: isVaultConfigured(),
+        unlocked: isVaultUnlocked()
+      }
+    };
+  } catch (err) {
+    return { ok: false, error: sanitizeSensitiveText(err.message || String(err)) };
+  }
+}
+
+async function forceSyncNow() {
+  if (!isConfigured()) {
+    return { ok: false, error: 'Repo is not configured.' };
+  }
+  if (isEncryptedMode() && !isVaultUnlocked()) {
+    return { ok: false, error: 'Vault is locked.' };
+  }
+
+  const confirm = await dialog.showMessageBox(mainWindow, {
+    type: 'warning',
+    title: 'Force Sync',
+    message: 'This will discard local changes and reset to GitHub.',
+    detail: 'Local snippets not pushed to GitHub will be lost.',
+    buttons: ['Cancel', 'Force Reset'],
+    defaultId: 0,
+    cancelId: 0,
+    noLink: true
+  });
+
+  if (confirm.response !== 1) {
+    return { ok: false, error: 'Cancelled.' };
+  }
+
+  try {
+    await initializeRepository();
+    const conf = getGitConfig();
+    await runGitInRepo(['fetch', 'origin', conf.branch]);
+    await runGitInRepo(['reset', '--hard', `origin/${conf.branch}`]);
+    const items = await loadItems();
+    return {
+      ok: true,
+      items,
+      security: {
+        dataMode: getDataMode()
+      },
+      vault: {
+        configured: isVaultConfigured(),
+        unlocked: isVaultUnlocked()
+      }
+    };
+  } catch (err) {
+    return { ok: false, error: sanitizeSensitiveText(err.message || String(err)) };
   }
 }
 
@@ -896,6 +968,9 @@ ipcMain.handle('config:save', async (_event, payload) => {
   if (!repoUrl || !branch || !pat) {
     return { ok: false, error: 'Repo URL, Branch and PAT are required.' };
   }
+  if (/\s/.test(branch)) {
+    return { ok: false, error: 'Branch name must not contain spaces.' };
+  }
   if (!repoUrl.startsWith('https://')) {
     return { ok: false, error: 'Repo URL must use HTTPS.' };
   }
@@ -1087,6 +1162,14 @@ ipcMain.handle('logs:read', async () => {
     }
     return { ok: false, error: String(err.message || err) };
   }
+});
+
+ipcMain.handle('sync:pull', async () => {
+  return pullNow();
+});
+
+ipcMain.handle('sync:force', async () => {
+  return forceSyncNow();
 });
 
 ipcMain.handle('items:create', async (_event, text) => {

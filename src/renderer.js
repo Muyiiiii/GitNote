@@ -33,6 +33,8 @@ const els = {
   btnNew: document.getElementById('btnNew'),
   btnEdit: document.getElementById('btnEdit'),
   btnDelete: document.getElementById('btnDelete'),
+  btnPullSync: document.getElementById('btnPullSync'),
+  btnForceSync: document.getElementById('btnForceSync'),
   btnSettings: document.getElementById('btnSettings'),
   editor: document.getElementById('editor'),
   editorTitle: document.getElementById('editorTitle'),
@@ -477,6 +479,32 @@ els.list.addEventListener('click', (event) => {
 els.btnNew.addEventListener('click', () => openEditor('new'));
 els.btnEdit.addEventListener('click', () => openEditor('edit'));
 els.btnDelete.addEventListener('click', deleteSelected);
+els.btnPullSync.addEventListener('click', async () => {
+  const result = await window.api.pullSync();
+  if (!result.ok) {
+    alert(result.error || 'Pull sync failed.');
+    return;
+  }
+  applySecurityAndVault(result);
+  if (result.items) {
+    state.items = result.items;
+    applyFilter();
+  }
+});
+els.btnForceSync.addEventListener('click', async () => {
+  const result = await window.api.forceSync();
+  if (!result.ok) {
+    if (result.error && result.error !== 'Cancelled.') {
+      alert(result.error || 'Force sync failed.');
+    }
+    return;
+  }
+  applySecurityAndVault(result);
+  if (result.items) {
+    state.items = result.items;
+    applyFilter();
+  }
+});
 els.btnSettings.addEventListener('click', openSettings);
 els.saveItem.addEventListener('click', saveEditor);
 els.cancelEdit.addEventListener('click', closeEditor);
